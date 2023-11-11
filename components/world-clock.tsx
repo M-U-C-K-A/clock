@@ -1,66 +1,79 @@
 "use client"
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import Link from "next/link";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+
+import { Button } from "@/components/ui/button";
 import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select";
-  
-interface City {
-  label: string;
-  value: string;
-}
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/components/ui/use-toast";
 
-export function WorldClock(): JSX.Element {
-  const [selectedCity, setSelectedCity] = useState<string>('Europe/Paris');
-  const [time, setTime] = useState<Date>(new Date());
+const FormSchema = z.object({
+  city: z
+    .string({
+      required_error: "Please select a city to display.",
+    }),
+});
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
+export function CitySelectForm() {
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+  });
 
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleChange = (event: ChangeEvent<HTMLSelectElement>): void => {
-    setSelectedCity(event.target.value);
-  };
-
-  const formattedTime = time.toLocaleTimeString('fr-FR', { timeZone: selectedCity });
-
-  // Liste de quelques villes avec leur fuseau horaire
-  const cities: City[] = [
-    { label: 'New York', value: 'America/New_York' },
-    { label: 'Tokyo', value: 'Asia/Tokyo' },
-    { label: 'London', value: 'Europe/London' },
-    // Ajoutez d'autres villes selon vos besoins
-  ];
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    toast({
+      title: "You submitted the following values:",
+      description: (
+        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+        </pre>
+      ),
+    });
+  }
 
   return (
-    <div className="p-4 m-4 max-w-md w-full border border-gray-300 rounded-md">
-      <h2>World Clock</h2>
-      <Select>
-      <SelectTrigger className="w-[180px]">
-        <SelectValue>{selectedCity}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>Time Zones</SelectLabel>
-          {cities.map((city) => (
-            <SelectItem key={city.value} value={city.value} onClick={() => setSelectedCity(city.value)}>
-              {city.label}
-            </SelectItem>
-          ))}
-        </SelectGroup>
-      </SelectContent>
-      <p className="text-4xl font-bold mt-4">{formattedTime}</p>
-    </Select>
-      <p className="text-4xl font-bold mt-4">{formattedTime}</p>
-    </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6">
+        <FormField
+          control={form.control}
+          name="city"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>City</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a city to display" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="New York">New York, USA</SelectItem>
+                  <SelectItem value="Tokyo">Tokyo, Japan</SelectItem>
+                  <SelectItem value="London">London, UK</SelectItem>
+                  {/* Ajoutez d'autres villes et continents selon vos besoins */}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
   );
 }
